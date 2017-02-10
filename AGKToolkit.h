@@ -3,8 +3,9 @@
 #include <string>
 #include <vector>
 #include <math.h>
+#include <sstream>
 
-#define RAPIDXML_NO_EXCEPTIONS
+
 #include "rapidxml.hpp"
 
 using namespace std;
@@ -652,56 +653,80 @@ public:
 	void loadTmxMap(string filename, float offsetX = 0, float offsetY = 0) {
 		mapX = offsetX;
 		mapY = offsetY;
-		vector<string> data;
+
+		//Load the file into memory
+		string data = "";
+		string line = "";
 		int tmxDoc = agk::OpenToRead(filename.c_str());
 		while (agk::FileEOF(tmxDoc) == 0) {
-			data.push_back(agk::ReadLine(tmxDoc));
+			line=agk::ReadLine(tmxDoc);
+			data += line;
 		}
 		agk::CloseFile(tmxDoc);
-		for (int x = 0; x < data.size(); x++) {
-			if (agk::FindStringCount(data[x].c_str(), "tileset") > 0) {
+		//End loading file into memory
+		
+		//Begin parsing file
+
+		xml_document<> doc;
+		doc.parse<0>(&data[0]);
+		xml_node<> *root = doc.first_node("map");
+
+		
+
+			for (xml_node<> *tilesetNode = root->first_node("tileset"); tilesetNode; tilesetNode = tilesetNode->next_sibling()) {
+
 				tilesets.emplace_back();
-				tilesets[tilesets.size() - 1].firstgid = agk::Val(agk::GetStringToken(data[x].c_str(), "\"", 2));
-				tilesets[tilesets.size() - 1].name = agk::GetStringToken(data[x].c_str(), "\"", 4);
-				tilesets[tilesets.size() - 1].tilewidth = agk::Val(agk::GetStringToken(data[x].c_str(), "\"", 6));
-				tilesets[tilesets.size() - 1].tileheight = agk::Val(agk::GetStringToken(data[x].c_str(), "\"", 8));
-				tilesets[tilesets.size() - 1].tilecount = agk::Val(agk::GetStringToken(data[x].c_str(), "\"", 10));
-				tilesets[tilesets.size() - 1].columns = agk::Val(agk::GetStringToken(data[x].c_str(), "\"", 12));
-				x++;
-				tilesets[tilesets.size() - 1].imageID = agk::LoadImage(agk::GetStringToken(data[x].c_str(), "\"", 2));
+
+				tilesets[tilesets.size() - 1].firstgid = atoi(tilesetNode->first_attribute("firstgid")->value());
+				tilesets[tilesets.size() - 1].name = tilesetNode->first_attribute("name")->value();
+				tilesets[tilesets.size() - 1].tilewidth = atoi(tilesetNode->first_attribute("tilewidth")->value());
+				tilesets[tilesets.size() - 1].tileheight = atoi(tilesetNode->first_attribute("tileheight")->value());
+				tilesets[tilesets.size() - 1].tilecount = atoi(tilesetNode->first_attribute("tilecount")->value());
+				tilesets[tilesets.size() - 1].columns = atoi(tilesetNode->first_attribute("columns")->value());
+
+				tilesets[tilesets.size() - 1].imageID = agk::LoadImage(tilesetNode->first_node("image")->first_attribute("source")->value());
 				tilesets[tilesets.size() - 1].lastgid = tilesets[tilesets.size() - 1].firstgid + (tilesets[tilesets.size() - 1].tilecount - 1);
 
-				x++;
 			}
-			else if (agk::FindStringCount(data[x].c_str(), "imagelayer") > 0) {
+
+			for (xml_node<> *imageNode = root->first_node("imagelayer"); imageNode; imageNode = imageNode->next_sibling()) {
+
 				imageLayers.emplace_back();
-				imageLayers[imageLayers.size() - 1].name = agk::GetStringToken(data[x].c_str(), "\"", 2);
-				imageLayers[imageLayers.size() - 1].offsetx = agk::Val(agk::GetStringToken(data[x].c_str(), "\"", 4));
-				imageLayers[imageLayers.size() - 1].offsety = agk::Val(agk::GetStringToken(data[x].c_str(), "\"", 6));
-				x++;
-				imageLayers[imageLayers.size() - 1].imageID = agk::CreateSprite(agk::LoadImage(agk::GetStringToken(data[x].c_str(), "\"", 2)));
-				imageLayers[imageLayers.size() - 1].width = agk::Val(agk::GetStringToken(data[x].c_str(), "\"", 4));
-				imageLayers[imageLayers.size() - 1].height = agk::Val(agk::GetStringToken(data[x].c_str(), "\"", 6));
+
+				imageLayers[imageLayers.size() - 1].name = imageNode->first_attribute("name")->value();
+				imageLayers[imageLayers.size() - 1].offsetx = atoi(imageNode->first_attribute("offsetx")->value());
+				imageLayers[imageLayers.size() - 1].offsety = atoi(imageNode->first_attribute("offsety")->value());
+
+				imageLayers[imageLayers.size() - 1].imageID = agk::CreateSprite(agk::LoadImage(imageNode->first_node("image")->first_attribute("source")->value()));
+				imageLayers[imageLayers.size() - 1].width = atoi(imageNode->first_node("image")->first_attribute("width")->value());
+				imageLayers[imageLayers.size() - 1].height = atoi(imageNode->first_node("image")->first_attribute("height")->value());
 				agk::SetSpriteSize(imageLayers[imageLayers.size() - 1].imageID, imageLayers[imageLayers.size() - 1].width, imageLayers[imageLayers.size() - 1].height);
 				agk::SetSpritePosition(imageLayers[imageLayers.size() - 1].imageID, imageLayers[imageLayers.size() - 1].offsetx + offsetX, imageLayers[imageLayers.size() - 1].offsety + offsetY);
 
-				x++;
-
 			}
-			else if (agk::FindStringCount(data[x].c_str(), "layer") > 0) {
+
+			for (xml_node<> *layerNode = root->first_node("layer"); layerNode; layerNode = layerNode->next_sibling()) {
+
 				layers.emplace_back();
-				layers[layers.size() - 1].name = agk::GetStringToken(data[x].c_str(), "\"", 2);
-				layers[layers.size() - 1].width = agk::Val(agk::GetStringToken(data[x].c_str(), "\"", 4));
-				layers[layers.size() - 1].height = agk::Val(agk::GetStringToken(data[x].c_str(), "\"", 6));
-				x++;
+
+				layers[layers.size() - 1].name = layerNode->first_attribute("name")->value();
+				layers[layers.size() - 1].width = atoi(layerNode->first_attribute("width")->value());
+				layers[layers.size() - 1].height = atoi(layerNode->first_attribute("height")->value());
+
+				stringstream rawData;
+				rawData.str(layerNode->first_node("data")->value());
+
+				int gid = 0;
+
 				for (int h = 1; h <= layers[layers.size() - 1].height; h++) {
-					x++;
 					for (int w = 1; w <= layers[layers.size() - 1].width; w++) {
-						int gid = agk::Val(agk::GetStringToken(data[x].c_str(), ",", w));
+						rawData >> gid;
 						if (gid != 0) {
 							for (int i = 0; i < tilesets.size(); i++) {
-								if (gid>tilesets[i].firstgid - 1 && gid < tilesets[i].lastgid + 1) {
+								if (gid > tilesets[i].firstgid - 1 && gid < tilesets[i].lastgid + 1) {
+
 									layers[layers.size() - 1].sprites.emplace_back();
+
 									layers[layers.size() - 1].sprites[layers[layers.size() - 1].sprites.size() - 1].setImage(tilesets[i].imageID);
 									agk::SetSpriteAnimation(layers[layers.size() - 1].sprites[layers[layers.size() - 1].sprites.size() - 1].getID(), tilesets[i].tilewidth, tilesets[i].tileheight, tilesets[i].tilecount);
 									agk::SetSpriteFrame(layers[layers.size() - 1].sprites[layers[layers.size() - 1].sprites.size() - 1].getID(), (gid - tilesets[i].firstgid) + 1);
@@ -713,34 +738,48 @@ public:
 						}
 					}
 				}
-				x += 2;
+
 			}
-			else if (agk::FindStringCount(data[x].c_str(), "objectgroup") > 0) {
-				x++;
-				while (!(agk::FindStringCount(data[x].c_str(), "/objectgroup") > 0)) {
+
+			for (xml_node<> *objectGroupNode = root->first_node("objectgroup"); objectGroupNode; objectGroupNode = objectGroupNode->next_sibling()) {
+				for (xml_node<> *objectNode = objectGroupNode->first_node("object"); objectNode; objectNode = objectNode->next_sibling()) {
+
 					mapobjects.emplace_back();
-					mapobjects[mapobjects.size() - 1].id = agk::Val(agk::GetStringToken(data[x].c_str(), "\"", 2));
-					mapobjects[mapobjects.size() - 1].name = agk::GetStringToken(data[x].c_str(), "\"", 4);
-					mapobjects[mapobjects.size() - 1].otype = agk::GetStringToken(data[x].c_str(), "\"", 6);
-					mapobjects[mapobjects.size() - 1].x = agk::Val(agk::GetStringToken(data[x].c_str(), "\"", 8)) + offsetX;
-					mapobjects[mapobjects.size() - 1].y = agk::Val(agk::GetStringToken(data[x].c_str(), "\"", 10)) + offsetY;
-					mapobjects[mapobjects.size() - 1].width = agk::Val(agk::GetStringToken(data[x].c_str(), "\"", 12));
-					mapobjects[mapobjects.size() - 1].height = agk::Val(agk::GetStringToken(data[x].c_str(), "\"", 14));
-					x++;
-					if (agk::FindStringCount(data[x].c_str(), "polyline") > 0) {
-						for (int c = 1; c <= (agk::FindStringCount(data[x].c_str(), ",") * 2); c++) {
+
+					mapobjects[mapobjects.size() - 1].id = atoi(objectNode->first_attribute("id")->value());
+					mapobjects[mapobjects.size() - 1].name = objectNode->first_attribute("name")->value();
+					mapobjects[mapobjects.size() - 1].otype = objectNode->first_attribute("type")->value();
+					mapobjects[mapobjects.size() - 1].x = atoi(objectNode->first_attribute("x")->value()) + offsetX;
+					mapobjects[mapobjects.size() - 1].y = atoi(objectNode->first_attribute("y")->value()) + offsetY;
+					mapobjects[mapobjects.size() - 1].width = atoi(objectNode->first_attribute("width")->value());
+					mapobjects[mapobjects.size() - 1].height = atoi(objectNode->first_attribute("height")->value());
+
+					for (xml_node<> *polylineNode = objectNode->first_node("polyline"); polylineNode; polylineNode = polylineNode->next_sibling()) {
+						stringstream rawData;
+						rawData.str(polylineNode->first_attribute("points")->value());
+						int relX = 0;
+						int relY = 0;
+						while (!rawData.eof()) {
+
 							Point p = Point();
-							string cor = agk::GetStringToken(data[x].c_str(), "\"", 2);
-							p.x = mapobjects[mapobjects.size() - 1].x + agk::Val(agk::GetStringToken(cor.c_str(), " ,", c));
-							c++;
-							p.y = mapobjects[mapobjects.size() - 1].y + agk::Val(agk::GetStringToken(cor.c_str(), " ,", c));
+
+							rawData >> relX;
+							rawData >> relY;
+
+							p.x = mapobjects[mapobjects.size() - 1].x + relX;
+							p.y = mapobjects[mapobjects.size() - 1].y + relY;
+
 							mapobjects[mapobjects.size() - 1].points.push_back(p);
 						}
-						x++;
 					}
+
 				}
 			}
-		}
+
+		
+
+		//End parsing file
+
 		visible = true;
 		active = true;
 	}

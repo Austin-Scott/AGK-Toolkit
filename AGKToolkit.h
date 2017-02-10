@@ -3,7 +3,12 @@
 #include <string>
 #include <vector>
 #include <math.h>
+
+#define RAPIDXML_NO_EXCEPTIONS
+#include "rapidxml.hpp"
+
 using namespace std;
+using namespace rapidxml;
 
 
 class Animation {

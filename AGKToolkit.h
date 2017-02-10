@@ -650,9 +650,21 @@ public:
 		mapX = newX;
 		mapY = newY;
 	}
+	string getPathFromRoot(string pathTo, string pathFrom) {
+		string pathToFile = pathTo;
+		string pathFromFile = pathFrom;
+		size_t begin = 0;
+		size_t length = 3;
+		while (pathFromFile.find("../")!=string::npos) {
+			pathToFile.erase(pathToFile.begin() + pathToFile.find_last_of('/'), pathToFile.end());
+			pathFromFile.erase(begin, length);
+		}
+		return pathToFile + "/" + pathFromFile;
+	}
 	void loadTmxMap(string filename, float offsetX = 0, float offsetY = 0) {
 		mapX = offsetX;
 		mapY = offsetY;
+
 
 		//Load the file into memory
 		string data = "";
@@ -666,6 +678,13 @@ public:
 		//End loading file into memory
 		
 		//Begin parsing file
+		string path = "";
+		size_t n = count(filename.begin(), filename.end(), '/');
+		if (n > 0) {
+			path = filename;
+			path.erase(path.begin() + path.find_last_of('/'), path.end());
+		}
+
 
 		xml_document<> doc;
 		doc.parse<0>(&data[0]);
@@ -686,7 +705,7 @@ public:
 					tilesets[tilesets.size() - 1].tilecount = atoi(tilesetNode->first_attribute("tilecount")->value());
 					tilesets[tilesets.size() - 1].columns = atoi(tilesetNode->first_attribute("columns")->value());
 
-					tilesets[tilesets.size() - 1].imageID = agk::LoadImage(tilesetNode->first_node("image")->first_attribute("source")->value());
+					tilesets[tilesets.size() - 1].imageID = agk::LoadImage(getPathFromRoot(path,tilesetNode->first_node("image")->first_attribute("source")->value()).c_str());
 					tilesets[tilesets.size() - 1].lastgid = tilesets[tilesets.size() - 1].firstgid + (tilesets[tilesets.size() - 1].tilecount - 1);
 
 				}
@@ -703,7 +722,7 @@ public:
 					imageLayers[imageLayers.size() - 1].offsetx = atoi(imageNode->first_attribute("offsetx")->value());
 					imageLayers[imageLayers.size() - 1].offsety = atoi(imageNode->first_attribute("offsety")->value());
 
-					imageLayers[imageLayers.size() - 1].imageID = agk::CreateSprite(agk::LoadImage(imageNode->first_node("image")->first_attribute("source")->value()));
+					imageLayers[imageLayers.size() - 1].imageID = agk::CreateSprite(agk::LoadImage(getPathFromRoot(path,imageNode->first_node("image")->first_attribute("source")->value()).c_str()));
 					imageLayers[imageLayers.size() - 1].width = atoi(imageNode->first_node("image")->first_attribute("width")->value());
 					imageLayers[imageLayers.size() - 1].height = atoi(imageNode->first_node("image")->first_attribute("height")->value());
 					agk::SetSpriteSize(imageLayers[imageLayers.size() - 1].imageID, imageLayers[imageLayers.size() - 1].width, imageLayers[imageLayers.size() - 1].height);
@@ -814,6 +833,8 @@ public:
 			}
 
 		}
+
+		
 
 		//End parsing file
 

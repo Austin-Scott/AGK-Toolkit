@@ -671,112 +671,149 @@ public:
 		doc.parse<0>(&data[0]);
 		xml_node<> *root = doc.first_node("map");
 
-		
+		if (root != 0) {
 
-			for (xml_node<> *tilesetNode = root->first_node("tileset"); tilesetNode; tilesetNode = tilesetNode->next_sibling()) {
+			if (root->first_node("tileset") != 0) {
 
-				tilesets.emplace_back();
+				for (xml_node<> *tilesetNode = root->first_node("tileset"); tilesetNode; tilesetNode = tilesetNode->next_sibling("tileset")) {
 
-				tilesets[tilesets.size() - 1].firstgid = atoi(tilesetNode->first_attribute("firstgid")->value());
-				tilesets[tilesets.size() - 1].name = tilesetNode->first_attribute("name")->value();
-				tilesets[tilesets.size() - 1].tilewidth = atoi(tilesetNode->first_attribute("tilewidth")->value());
-				tilesets[tilesets.size() - 1].tileheight = atoi(tilesetNode->first_attribute("tileheight")->value());
-				tilesets[tilesets.size() - 1].tilecount = atoi(tilesetNode->first_attribute("tilecount")->value());
-				tilesets[tilesets.size() - 1].columns = atoi(tilesetNode->first_attribute("columns")->value());
+					tilesets.emplace_back();
 
-				tilesets[tilesets.size() - 1].imageID = agk::LoadImage(tilesetNode->first_node("image")->first_attribute("source")->value());
-				tilesets[tilesets.size() - 1].lastgid = tilesets[tilesets.size() - 1].firstgid + (tilesets[tilesets.size() - 1].tilecount - 1);
+					tilesets[tilesets.size() - 1].firstgid = atoi(tilesetNode->first_attribute("firstgid")->value());
+					tilesets[tilesets.size() - 1].name = tilesetNode->first_attribute("name")->value();
+					tilesets[tilesets.size() - 1].tilewidth = atoi(tilesetNode->first_attribute("tilewidth")->value());
+					tilesets[tilesets.size() - 1].tileheight = atoi(tilesetNode->first_attribute("tileheight")->value());
+					tilesets[tilesets.size() - 1].tilecount = atoi(tilesetNode->first_attribute("tilecount")->value());
+					tilesets[tilesets.size() - 1].columns = atoi(tilesetNode->first_attribute("columns")->value());
 
-			}
+					tilesets[tilesets.size() - 1].imageID = agk::LoadImage(tilesetNode->first_node("image")->first_attribute("source")->value());
+					tilesets[tilesets.size() - 1].lastgid = tilesets[tilesets.size() - 1].firstgid + (tilesets[tilesets.size() - 1].tilecount - 1);
 
-			for (xml_node<> *imageNode = root->first_node("imagelayer"); imageNode; imageNode = imageNode->next_sibling()) {
-
-				imageLayers.emplace_back();
-
-				imageLayers[imageLayers.size() - 1].name = imageNode->first_attribute("name")->value();
-				imageLayers[imageLayers.size() - 1].offsetx = atoi(imageNode->first_attribute("offsetx")->value());
-				imageLayers[imageLayers.size() - 1].offsety = atoi(imageNode->first_attribute("offsety")->value());
-
-				imageLayers[imageLayers.size() - 1].imageID = agk::CreateSprite(agk::LoadImage(imageNode->first_node("image")->first_attribute("source")->value()));
-				imageLayers[imageLayers.size() - 1].width = atoi(imageNode->first_node("image")->first_attribute("width")->value());
-				imageLayers[imageLayers.size() - 1].height = atoi(imageNode->first_node("image")->first_attribute("height")->value());
-				agk::SetSpriteSize(imageLayers[imageLayers.size() - 1].imageID, imageLayers[imageLayers.size() - 1].width, imageLayers[imageLayers.size() - 1].height);
-				agk::SetSpritePosition(imageLayers[imageLayers.size() - 1].imageID, imageLayers[imageLayers.size() - 1].offsetx + offsetX, imageLayers[imageLayers.size() - 1].offsety + offsetY);
+				}
 
 			}
 
-			for (xml_node<> *layerNode = root->first_node("layer"); layerNode; layerNode = layerNode->next_sibling()) {
+			if (root->first_node("imagelayer") != 0) {
 
-				layers.emplace_back();
+				for (xml_node<> *imageNode = root->first_node("imagelayer"); imageNode; imageNode = imageNode->next_sibling("imagelayer")) {
 
-				layers[layers.size() - 1].name = layerNode->first_attribute("name")->value();
-				layers[layers.size() - 1].width = atoi(layerNode->first_attribute("width")->value());
-				layers[layers.size() - 1].height = atoi(layerNode->first_attribute("height")->value());
+					imageLayers.emplace_back();
 
-				stringstream rawData;
-				rawData.str(layerNode->first_node("data")->value());
+					imageLayers[imageLayers.size() - 1].name = imageNode->first_attribute("name")->value();
+					imageLayers[imageLayers.size() - 1].offsetx = atoi(imageNode->first_attribute("offsetx")->value());
+					imageLayers[imageLayers.size() - 1].offsety = atoi(imageNode->first_attribute("offsety")->value());
 
-				int gid = 0;
+					imageLayers[imageLayers.size() - 1].imageID = agk::CreateSprite(agk::LoadImage(imageNode->first_node("image")->first_attribute("source")->value()));
+					imageLayers[imageLayers.size() - 1].width = atoi(imageNode->first_node("image")->first_attribute("width")->value());
+					imageLayers[imageLayers.size() - 1].height = atoi(imageNode->first_node("image")->first_attribute("height")->value());
+					agk::SetSpriteSize(imageLayers[imageLayers.size() - 1].imageID, imageLayers[imageLayers.size() - 1].width, imageLayers[imageLayers.size() - 1].height);
+					agk::SetSpritePosition(imageLayers[imageLayers.size() - 1].imageID, imageLayers[imageLayers.size() - 1].offsetx + offsetX, imageLayers[imageLayers.size() - 1].offsety + offsetY);
 
-				for (int h = 1; h <= layers[layers.size() - 1].height; h++) {
-					for (int w = 1; w <= layers[layers.size() - 1].width; w++) {
-						rawData >> gid;
-						if (gid != 0) {
-							for (int i = 0; i < tilesets.size(); i++) {
-								if (gid > tilesets[i].firstgid - 1 && gid < tilesets[i].lastgid + 1) {
+				}
 
-									layers[layers.size() - 1].sprites.emplace_back();
+			}
 
-									layers[layers.size() - 1].sprites[layers[layers.size() - 1].sprites.size() - 1].setImage(tilesets[i].imageID);
-									agk::SetSpriteAnimation(layers[layers.size() - 1].sprites[layers[layers.size() - 1].sprites.size() - 1].getID(), tilesets[i].tilewidth, tilesets[i].tileheight, tilesets[i].tilecount);
-									agk::SetSpriteFrame(layers[layers.size() - 1].sprites[layers[layers.size() - 1].sprites.size() - 1].getID(), (gid - tilesets[i].firstgid) + 1);
-									layers[layers.size() - 1].sprites[layers[layers.size() - 1].sprites.size() - 1].setPos(((w - 1)*tilesets[i].tilewidth) + offsetX, ((h - 1)*tilesets[i].tileheight) + offsetY);
-									agk::SetSpriteUVBorder(layers[layers.size() - 1].sprites[layers[layers.size() - 1].sprites.size() - 1].getID(), 1);
+			if (root->first_node("layer") != 0) {
 
+				for (xml_node<> *layerNode = root->first_node("layer"); layerNode; layerNode = layerNode->next_sibling("layer")) {
+
+					layers.emplace_back();
+
+					layers[layers.size() - 1].name = layerNode->first_attribute("name")->value();
+					layers[layers.size() - 1].width = atoi(layerNode->first_attribute("width")->value());
+					layers[layers.size() - 1].height = atoi(layerNode->first_attribute("height")->value());
+
+					stringstream rawData;
+					rawData.str(layerNode->first_node("data")->value());
+
+					int gid = 0;
+					string token = "";
+
+					for (int h = 1; h <= layers[layers.size() - 1].height; h++) {
+						for (int w = 1; w <= layers[layers.size() - 1].width; w++) {
+							getline(rawData, token, ',');
+							gid = atoi(token.c_str());
+							if (gid != 0) {
+								for (int i = 0; i < tilesets.size(); i++) {
+									if (gid > tilesets[i].firstgid - 1 && gid < tilesets[i].lastgid + 1) {
+
+										layers[layers.size() - 1].sprites.emplace_back();
+
+										layers[layers.size() - 1].sprites[layers[layers.size() - 1].sprites.size() - 1].setImage(tilesets[i].imageID);
+										agk::SetSpriteAnimation(layers[layers.size() - 1].sprites[layers[layers.size() - 1].sprites.size() - 1].getID(), tilesets[i].tilewidth, tilesets[i].tileheight, tilesets[i].tilecount);
+										agk::SetSpriteFrame(layers[layers.size() - 1].sprites[layers[layers.size() - 1].sprites.size() - 1].getID(), (gid - tilesets[i].firstgid) + 1);
+										layers[layers.size() - 1].sprites[layers[layers.size() - 1].sprites.size() - 1].setPos(((w - 1)*tilesets[i].tilewidth) + offsetX, ((h - 1)*tilesets[i].tileheight) + offsetY);
+										agk::SetSpriteUVBorder(layers[layers.size() - 1].sprites[layers[layers.size() - 1].sprites.size() - 1].getID(), 1);
+
+									}
 								}
 							}
 						}
 					}
+
 				}
 
 			}
 
-			for (xml_node<> *objectGroupNode = root->first_node("objectgroup"); objectGroupNode; objectGroupNode = objectGroupNode->next_sibling()) {
-				for (xml_node<> *objectNode = objectGroupNode->first_node("object"); objectNode; objectNode = objectNode->next_sibling()) {
+			if (root->first_node("objectgroup") != 0) {
 
-					mapobjects.emplace_back();
+				for (xml_node<> *objectGroupNode = root->first_node("objectgroup"); objectGroupNode; objectGroupNode = objectGroupNode->next_sibling("objectgroup")) {
 
-					mapobjects[mapobjects.size() - 1].id = atoi(objectNode->first_attribute("id")->value());
-					mapobjects[mapobjects.size() - 1].name = objectNode->first_attribute("name")->value();
-					mapobjects[mapobjects.size() - 1].otype = objectNode->first_attribute("type")->value();
-					mapobjects[mapobjects.size() - 1].x = atoi(objectNode->first_attribute("x")->value()) + offsetX;
-					mapobjects[mapobjects.size() - 1].y = atoi(objectNode->first_attribute("y")->value()) + offsetY;
-					mapobjects[mapobjects.size() - 1].width = atoi(objectNode->first_attribute("width")->value());
-					mapobjects[mapobjects.size() - 1].height = atoi(objectNode->first_attribute("height")->value());
+					if (objectGroupNode->first_node("object") != 0) {
 
-					for (xml_node<> *polylineNode = objectNode->first_node("polyline"); polylineNode; polylineNode = polylineNode->next_sibling()) {
-						stringstream rawData;
-						rawData.str(polylineNode->first_attribute("points")->value());
-						int relX = 0;
-						int relY = 0;
-						while (!rawData.eof()) {
+						for (xml_node<> *objectNode = objectGroupNode->first_node("object"); objectNode; objectNode = objectNode->next_sibling("object")) {
 
-							Point p = Point();
+							mapobjects.emplace_back();
 
-							rawData >> relX;
-							rawData >> relY;
+							mapobjects[mapobjects.size() - 1].id = atoi(objectNode->first_attribute("id")->value());
+							mapobjects[mapobjects.size() - 1].name = objectNode->first_attribute("name")->value();
+							mapobjects[mapobjects.size() - 1].otype = objectNode->first_attribute("type")->value();
+							mapobjects[mapobjects.size() - 1].x = atoi(objectNode->first_attribute("x")->value()) + offsetX;
+							mapobjects[mapobjects.size() - 1].y = atoi(objectNode->first_attribute("y")->value()) + offsetY;
+							mapobjects[mapobjects.size() - 1].width = atoi(objectNode->first_attribute("width")->value());
+							mapobjects[mapobjects.size() - 1].height = atoi(objectNode->first_attribute("height")->value());
 
-							p.x = mapobjects[mapobjects.size() - 1].x + relX;
-							p.y = mapobjects[mapobjects.size() - 1].y + relY;
 
-							mapobjects[mapobjects.size() - 1].points.push_back(p);
+							if (objectNode->first_node("polyline") != 0) {
+
+								for (xml_node<> *polylineNode = objectNode->first_node("polyline"); polylineNode; polylineNode = polylineNode->next_sibling("polyline")) {
+									stringstream rawData;
+									string corToken="";
+									stringstream corPair;
+									string token="";
+									rawData.str(polylineNode->first_attribute("points")->value());
+									int relX = 0;
+									int relY = 0;
+									while (!rawData.eof()) {
+
+										Point p = Point();
+
+										getline(rawData, corToken, ' ');
+										corPair.str(corToken);
+
+										getline(corPair, token, ',');
+										relX=atoi(token.c_str());
+
+										getline(corPair, token, ',');
+										relY=atoi(token.c_str());
+
+										p.x = mapobjects[mapobjects.size() - 1].x + relX;
+										p.y = mapobjects[mapobjects.size() - 1].y + relY;
+
+										mapobjects[mapobjects.size() - 1].points.push_back(p);
+									}
+								}
+
+							}
+
 						}
-					}
 
+					}
 				}
+
 			}
 
-		
+		}
 
 		//End parsing file
 

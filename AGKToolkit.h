@@ -736,6 +736,14 @@ public:
 		}
 		return result;
 	}
+	void setLayerOpacity(string name, int value) {
+		vector<Entity> tiles = getTilesinLayer(name);
+		if (value >= 0 && value<=255) {
+			for (int i = 0; i < tiles.size(); i++) {
+				agk::SetSpriteColorAlpha(tiles[i].getID(), value);
+			}
+		}
+	}
 	void processProperties(string dir, xml_node<> *parent, PropertyGroup &object) {
 		if (parent->first_node("properties") != 0) {
 			xml_node<> *child = parent->first_node("properties");
@@ -962,6 +970,10 @@ public:
 								}
 							}
 						}
+					}
+
+					if (layerNode->first_attribute("opacity") != 0) {
+						setLayerOpacity(layers[layers.size() - 1].name, (int)(atof(layerNode->first_attribute("opacity")->value()) * 255));
 					}
 
 				}

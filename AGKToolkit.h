@@ -1069,6 +1069,81 @@ public:
 
 };
 
+class MindMap { //Class for loading and using .mm files created in FreeMind
+private:
+	vector<MindMap> children;
+	string text;
+	string style;
+public:
+	MindMap(string newText, string newStyle) {
+		text = newText;
+		style = newStyle;
+	}
+	string getText() {
+		return text;
+	}
+	string getStyle() {
+		return style;
+	}
+	vector<MindMap> getChildren() {
+		return children;
+	}
+	vector<MindMap> getChildrenByStyle(string value) {
+		vector<MindMap> result;
+		for (int i = 0; i < children.size(); i++) {
+			if (value == children[i].getStyle()) {
+				result.push_back(children[i]);
+			}
+		}
+		return result;
+	}
+	vector<MindMap> getChildrenByText(string value) {
+		vector<MindMap> result;
+		for (int i = 0; i < children.size(); i++) {
+			if (value == children[i].getText()) {
+				result.push_back(children[i]);
+			}
+		}
+		return result;
+	}
+	void parseChildren(xml_node<> *root) {
+		if (root->first_node("node") != 0) {
+			for (xml_node<> *child = root->first_node("node"); child; child = child->next_sibling("node")) {
+				children.emplace_back(child->first_attribute("TEXT")->value(), child->first_attribute("STYLE")->value());
+				children.back().parseChildren(child);
+			}
+		}
+	}
+	void loadMM(string filename) {
+
+		//Load from file into memory
+
+		string data = "";
+		string line = "";
+		int mmDoc = agk::OpenToRead(filename.c_str());
+		while (agk::FileEOF(mmDoc) == 0) {
+			line = agk::ReadLine(mmDoc);
+			data += line;
+		}
+		agk::CloseFile(mmDoc);
+
+		//End loading into memory
+
+
+
+		//Parse document
+
+		xml_document<> doc;
+		doc.parse<0>(&data[0]);
+		xml_node<> *root = doc.first_node("map");
+
+		parseChildren(root);
+
+		//End parsing document
+	}
+
+};
+
 class Entry {
 private:
 	string name;

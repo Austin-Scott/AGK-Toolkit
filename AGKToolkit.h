@@ -861,6 +861,160 @@ public:
 
 };
 
+class Entry {
+private:
+	string name;
+	int intValue;
+	float floatValue;
+	string stringValue;
+public:
+	Entry() {
+		name = "";
+		intValue = 0;
+		floatValue = 0;
+		stringValue = "";
+	}
+	Entry(string newName, int setValue) {
+		name = newName;
+		intValue = setValue;
+		floatValue = 0;
+		stringValue = "";
+	}
+	Entry(string newName, float value) {
+		name = newName;
+		intValue = 0;
+		floatValue = value;
+		stringValue = "";
+	}
+	Entry(string newName, string value) {
+		name = newName;
+		intValue = 0;
+		floatValue = 0;
+		stringValue = value;
+	}
+	void read(int file) {
+		name = agk::ReadString(file);
+		intValue = agk::ReadInteger(file);
+		floatValue = agk::ReadFloat(file);
+		stringValue = agk::ReadString(file);
+	}
+	void write(int file) {
+		agk::WriteString(file, name.c_str());
+		agk::WriteInteger(file, intValue);
+		agk::WriteFloat(file, floatValue);
+		agk::WriteString(file, stringValue.c_str());
+	}
+	string getName() {
+		return name;
+	}
+	int getInt() {
+		return intValue;
+	}
+	float getFloat() {
+		return floatValue;
+	}
+	string getString() {
+		return stringValue;
+	}
+	void setInt(int value) {
+		intValue = value;
+	}
+	void setFloat(float value) {
+		floatValue = value;
+	}
+	void setString(string value) {
+		stringValue = value;
+	}
+};
+
+class Save {
+private:
+	vector<Entry> memory;
+public:
+	Entry getEntry(string name) {
+		Entry result = Entry();
+		for (int i = 0; i < memory.size(); i++) {
+			if (name == memory[i].getName()) {
+				result = memory[i];
+				break;
+			}
+		}
+		return result;
+	}
+	bool read(string filename) {
+		memory.erase(memory.begin(), memory.end());
+		if (agk::GetFileExists(filename.c_str()) == 1) {
+			int file = agk::OpenToRead(filename.c_str());
+			int num = agk::ReadInteger(file);
+			for (int i = 0; i < num; i++) {
+				memory.emplace_back();
+				memory.back().read(file);
+			}
+			agk::CloseFile(file);
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+	void write(string filename) {
+		int file = agk::OpenToWrite(filename.c_str());
+		agk::WriteInteger(file, memory.size());
+		for (int i = 0; i < memory.size(); i++) {
+			memory[i].write(file);
+		}
+		agk::CloseFile(file);
+	}
+	void setI(string name, int value) {
+		bool found = false;
+		for (int i = 0; i < memory.size(); i++) {
+			if (name == memory[i].getName()) {
+				found = true;
+				memory[i].setInt(value);
+				break;
+			}
+		}
+		if (!found) {
+			memory.emplace_back(name, value);
+		}
+	}
+	void setF(string name, float value) {
+		bool found = false;
+		for (int i = 0; i < memory.size(); i++) {
+			if (name == memory[i].getName()) {
+				found = true;
+				memory[i].setFloat(value);
+				break;
+			}
+		}
+		if (!found) {
+			memory.emplace_back(name, value);
+		}
+	}
+	void setS(string name, string value) {
+		bool found = false;
+		for (int i = 0; i < memory.size(); i++) {
+			if (name == memory[i].getName()) {
+				found = true;
+				memory[i].setString(value);
+				break;
+			}
+		}
+		if (!found) {
+			memory.emplace_back(name, value);
+		}
+	}
+	int getI(string name) {
+		return getEntry(name).getInt();
+	}
+	float getF(string name) {
+		return getEntry(name).getFloat();
+	}
+	string getS(string name) {
+		return getEntry(name).getString();
+	}
+};
+
 class Engine {
 private:
 	float offsetX;

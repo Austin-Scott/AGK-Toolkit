@@ -525,6 +525,106 @@ public:
 
 };
 
+class Property {
+private:
+	string name;
+	string stringValue;
+	int intValue;
+	float floatValue;
+	bool boolValue;
+public:
+	Property() {
+		name = "";
+		intValue = 0;
+		boolValue = false;
+		floatValue = 0;
+		stringValue = "";
+	}
+	Property(string newName, int setValue) {
+		name = newName;
+		intValue = setValue;
+		floatValue = 0;
+		stringValue = "";
+		boolValue = false;
+	}
+	Property(string newName, float value) {
+		name = newName;
+		intValue = 0;
+		floatValue = value;
+		stringValue = "";
+		boolValue = false;
+	}
+	Property(string newName, string value) {
+		name = newName;
+		intValue = 0;
+		floatValue = 0;
+		boolValue = false;
+		stringValue = value;
+	}
+	Property(string newName, bool value) {
+		name = newName;
+		intValue = 0;
+		floatValue = 0;
+		boolValue = value;
+		stringValue = "";
+	}
+	string getName() {
+		return name;
+	}
+	int getI() {
+		return intValue;
+	}
+	float getF() {
+		return floatValue;
+	}
+	bool getB() {
+		return boolValue;
+	}
+	string getS() {
+		return stringValue;
+	}
+};
+
+class PropertyGroup {
+private:
+	vector<Property> values;
+public:
+	void addBool(string name, bool value) {
+		values.emplace_back(name, value);
+	}
+	void addString(string name, string value) {
+		values.emplace_back(name, value);
+	}
+	void addInteger(string name, int value) {
+		values.emplace_back(name, value);
+	}
+	void addFloat(string name, float value) {
+		values.emplace_back(name, value);
+	}
+	int getIndex(string name) {
+		int value=0;
+		for (int i = 0; i < values.size(); i++) {
+			if (values[i].getName() == name) {
+				value = i;
+				break;
+			}
+		}
+		return value;
+	}
+	int getI(string name) {
+		return values[getIndex(name)].getI();
+	}
+	bool getB(string name) {
+		return values[getIndex(name)].getB();
+	}
+	float getF(string name) {
+		return values[getIndex(name)].getF();
+	}
+	string getS(string name) {
+		return values[getIndex(name)].getS();
+	}
+};
+
 struct Tileset {
 	int firstgid;
 	int lastgid;
@@ -534,6 +634,7 @@ struct Tileset {
 	int tilecount;
 	int columns;
 	int imageID;
+	PropertyGroup properties;
 };
 
 struct Layer {
@@ -541,6 +642,7 @@ struct Layer {
 	int width;
 	int height;
 	vector<Entity> sprites;
+	PropertyGroup properties;
 };
 
 struct ImageLayer {
@@ -550,6 +652,7 @@ struct ImageLayer {
 	float height;
 	float offsetx;
 	float offsety;
+	PropertyGroup properties;
 };
 
 struct Point {
@@ -566,6 +669,7 @@ struct MapObject {
 	float width;
 	float height;
 	vector<Point> points;
+	PropertyGroup properties;
 };
 
 class TmxMap {
@@ -574,6 +678,7 @@ private:
 	vector<Tileset> tilesets;
 	vector<ImageLayer> imageLayers;
 	vector<MapObject> mapobjects;
+	PropertyGroup properties;
 	bool visible;
 	bool active;
 	float mapX;
@@ -587,6 +692,87 @@ public:
 	}
 	TmxMap(string filename) {
 		loadTmxMap(filename);
+	}
+	PropertyGroup getProperties() {
+		return properties;
+	}
+	PropertyGroup getLayerProperties(string name) {
+		PropertyGroup result = PropertyGroup();
+		for (int i = 0; i < layers.size(); i++) {
+			if (layers[i].name == name) {
+				result = layers[i].properties;
+				break;
+			}
+		}
+		return result;
+	}
+	PropertyGroup getTilesetProperties(string name) {
+		PropertyGroup result = PropertyGroup();
+		for (int i = 0; i < tilesets.size(); i++) {
+			if (tilesets[i].name == name) {
+				result = tilesets[i].properties;
+				break;
+			}
+		}
+		return result;
+	}
+	PropertyGroup getImageLayerProperties(string name) {
+		PropertyGroup result = PropertyGroup();
+		for (int i = 0; i < imageLayers.size(); i++) {
+			if (imageLayers[i].name == name) {
+				result = imageLayers[i].properties;
+				break;
+			}
+		}
+		return result;
+	}
+	PropertyGroup getObjectProperties(string name) {
+		PropertyGroup result = PropertyGroup();
+		for (int i = 0; i < mapobjects.size(); i++) {
+			if (mapobjects[i].name == name) {
+				result = mapobjects[i].properties;
+				break;
+			}
+		}
+		return result;
+	}
+	void processProperties(string dir, xml_node<> *parent, PropertyGroup &object) {
+		if (parent->first_node("properties") != 0) {
+			xml_node<> *child = parent->first_node("properties");
+			if (child->first_node("property") != 0) {
+				for (xml_node<> *propertyNode = child->first_node("property"); propertyNode; propertyNode = propertyNode->next_sibling("property")) {
+					string name = propertyNode->first_attribute("name")->value();
+					string type = "string";
+					if (propertyNode->first_attribute("type") != 0) {
+						type=propertyNode->first_attribute("type")->value();
+					}
+					if (type == "string") {
+						string value = propertyNode->first_attribute("value")->value();
+						object.addString(name, value);
+					}
+					else if (type == "int") {
+						int value = atoi(propertyNode->first_attribute("value")->value());
+						object.addInteger(name, value);
+					}
+					else if (type == "float") {
+						float value = stof(propertyNode->first_attribute("value")->value());
+						object.addFloat(name, value);
+					}
+					else if (type == "bool") {
+						if (string(propertyNode->first_attribute("value")->value()) == "true") {
+							object.addBool(name, true);
+						}
+						else {
+							object.addBool(name, false);
+						}
+					}
+					else if (type == "file") {
+						string rel = propertyNode->first_attribute("value")->value();
+						object.addString(name, getPathFromRoot(dir, rel));
+					}
+				}
+			}
+		}
 	}
 	bool getVisible() {
 		return visible;
@@ -692,6 +878,8 @@ public:
 
 		if (root != 0) {
 
+			processProperties(path, root, properties);
+
 			if (root->first_node("tileset") != 0) {
 
 				for (xml_node<> *tilesetNode = root->first_node("tileset"); tilesetNode; tilesetNode = tilesetNode->next_sibling("tileset")) {
@@ -707,6 +895,8 @@ public:
 
 					tilesets[tilesets.size() - 1].imageID = agk::LoadImage(getPathFromRoot(path,tilesetNode->first_node("image")->first_attribute("source")->value()).c_str());
 					tilesets[tilesets.size() - 1].lastgid = tilesets[tilesets.size() - 1].firstgid + (tilesets[tilesets.size() - 1].tilecount - 1);
+
+					processProperties(path, tilesetNode, tilesets[tilesets.size() - 1].properties);
 
 				}
 
@@ -728,6 +918,8 @@ public:
 					agk::SetSpriteSize(imageLayers[imageLayers.size() - 1].imageID, imageLayers[imageLayers.size() - 1].width, imageLayers[imageLayers.size() - 1].height);
 					agk::SetSpritePosition(imageLayers[imageLayers.size() - 1].imageID, imageLayers[imageLayers.size() - 1].offsetx + offsetX, imageLayers[imageLayers.size() - 1].offsety + offsetY);
 
+					processProperties(path, imageNode, imageLayers[imageLayers.size() - 1].properties);
+
 				}
 
 			}
@@ -741,6 +933,8 @@ public:
 					layers[layers.size() - 1].name = layerNode->first_attribute("name")->value();
 					layers[layers.size() - 1].width = atoi(layerNode->first_attribute("width")->value());
 					layers[layers.size() - 1].height = atoi(layerNode->first_attribute("height")->value());
+
+					processProperties(path, layerNode, layers[layers.size() - 1].properties);
 
 					stringstream rawData;
 					rawData.str(layerNode->first_node("data")->value());
@@ -791,6 +985,8 @@ public:
 							mapobjects[mapobjects.size() - 1].y = atoi(objectNode->first_attribute("y")->value()) + offsetY;
 							mapobjects[mapobjects.size() - 1].width = atoi(objectNode->first_attribute("width")->value());
 							mapobjects[mapobjects.size() - 1].height = atoi(objectNode->first_attribute("height")->value());
+
+							processProperties(path, objectNode, mapobjects[mapobjects.size() - 1].properties);
 
 
 							if (objectNode->first_node("polyline") != 0) {

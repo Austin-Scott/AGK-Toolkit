@@ -1074,10 +1074,14 @@ private:
 	vector<MindMap> children;
 	string text;
 	string style;
+	string name;
+	string value;
 public:
 	MindMap(string newText, string newStyle) {
 		text = newText;
 		style = newStyle;
+		name = "";
+		value = "";
 	}
 	string getText() {
 		return text;
@@ -1087,6 +1091,12 @@ public:
 	}
 	vector<MindMap> getChildren() {
 		return children;
+	}
+	string getName() {
+		return name;
+	}
+	string getValue() {
+		return value;
 	}
 	vector<MindMap> getChildrenByStyle(string value) {
 		vector<MindMap> result;
@@ -1106,7 +1116,29 @@ public:
 		}
 		return result;
 	}
+	vector<MindMap> getChildrenByName(string value) {
+		vector<MindMap> result;
+		for (int i = 0; i < children.size(); i++) {
+			if (value == children[i].getName()) {
+				result.push_back(children[i]);
+			}
+		}
+		return result;
+	}
+	vector<MindMap> getChildrenByValue(string value) {
+		vector<MindMap> result;
+		for (int i = 0; i < children.size(); i++) {
+			if (value == children[i].getValue()) {
+				result.push_back(children[i]);
+			}
+		}
+		return result;
+	}
 	void parseChildren(xml_node<> *root) {
+		if (root->first_node("attribute") != 0) {
+			name = root->first_node("attribute")->first_attribute("NAME")->value();
+			value = root->first_node("attribute")->first_attribute("VALUE")->value();
+		}
 		if (root->first_node("node") != 0) {
 			for (xml_node<> *child = root->first_node("node"); child; child = child->next_sibling("node")) {
 				children.emplace_back(child->first_attribute("TEXT")->value(), child->first_attribute("STYLE")->value());

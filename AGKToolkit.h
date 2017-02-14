@@ -4,7 +4,7 @@
 #include <vector>
 #include <math.h>
 #include <sstream>
-
+#include <functional>
 
 #include "rapidxml.hpp"
 
@@ -1567,4 +1567,137 @@ public:
 
 };
 
+template<class T> class Moment {
+private:
+	T *obj;
+	function<void(T&)> actionf;
+	function<bool(T&)> questionf;
+	float delay;
+	bool isQuestion;
+	bool remove;
+	bool active;
+public:
+	Moment(T *nobj, function<void(T&)> nAction, float nDelay, bool nRemove) {
+		obj = nobj;
+		actionf = nAction;
+		delay = nDelay;
+		remove = nRemove;
+		active = true;
+		isQuestion = false;
+	}
+	Moment(T *nobj, function<bool(T&)> nQuestion, bool nRemove, float nDelay) {
+		obj = nobj;
+		questionf = nQuestion;
+		remove = nRemove;
+		isQuestion = true;
+		delay = nDelay;
+		active = true;
+	}
+	bool getIsQuestion() {
+		return isQuestion;
+	}
+	bool getActive() {
+		return active;
+	}
+	void setActive(bool value) {
+		active = value;
+	}
+	float getDelay() {
+		return delay;
+	}
+	bool shouldRemove() {
+		return remove;
+	}
+	void action() {
+		actionf(*obj);
+	}
+	bool question() {
+		return questionf(*obj);
+	}
+};
 
+template<class T> class Timeline {
+private:
+	vector<Moment<T>> events;
+	timer clock;
+	int index;
+	bool running;
+public:
+	Timeline() {
+		clock = timer();
+		index = 0;
+		running = false;
+	}
+	bool atLeastOne() {
+		bool result = false;
+		for (int i = 0; i < events.size(); i++) {
+			if (events[i].getActive()) {
+				result = true;
+				break;
+			}
+		}
+		return result;
+	}
+	void nextEvent() {
+		index++;
+		if (index < events.size()) {
+			if (atLeastOne()) {
+				if (events[index].getActive()) {
+					clock.set(events[index].getDelay());
+				}
+				else {
+					nextEvent();
+				}
+			}
+			else {
+				running = false;
+			}
+		}
+		else {
+			index = -1;
+			nextEvent();
+		}
+	}
+	void update(float delta) {
+		if (running) {
+			clock.update(delta);
+			if (clock.check()) {
+				if (events[index].getIsQuestion()) {
+					if (events[index].question()) {
+						if (events[index].shouldRemove()) {
+							events[index].setActive(false);
+						}
+						nextEvent();
+					}
+				}
+				else {
+					events[index].action();
+					if (events[index].shouldRemove()) {
+						events[index].setActive(false);
+					}
+					nextEvent();
+				}
+			}
+		}
+	}
+	void addAction(T *instance, function<void(T&)> func, float delay = 0, bool remove = true) {
+		events.emplace_back(instance, func, delay, remove);
+	}
+	void addQuestion(T *instance, function<bool(T&)> func, bool remove = true, float delay=0) {
+		events.emplace_back(instance, func, remove, delay);
+	}
+	void start() {
+		if (events.size() > 0) {
+			index = 0;
+			nextEvent();
+			running = true;
+			clock.start();
+		}
+	}
+	void stop() {
+		running = false;
+	}
+	void reset() {
+		for_each(events.begin(), events.end(), [&](Moment i) { i.setActive(true); })
+	}
+};

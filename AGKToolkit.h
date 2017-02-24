@@ -89,17 +89,25 @@ public:
 class Entity {
 private:
 	int spriteID;
+	string currentAnimation;
+	bool loopingAnimation;
 	vector<Animation> animations;
 public:
 	Entity() {
 		spriteID = -1;
+		currentAnimation = "";
+		loopingAnimation = false;
 	}
 	Entity(string imageFilename) {
 		spriteID = -1;
+		currentAnimation = "";
+		loopingAnimation = false;
 		loadImage(imageFilename);
 	}
 	Entity(string imageFilename, float x, float y) {
 		spriteID = -1;
+		currentAnimation = "";
+		loopingAnimation = false;
 		loadImage(imageFilename);
 		setPos(x, y);
 	}
@@ -145,6 +153,8 @@ public:
 						agk::AddSpriteAnimationFrame(spriteID, animations[i].getImageIDs()[x]);
 					}
 				}
+				currentAnimation = animations[i].getName();
+				loopingAnimation = animations[i].getLoop();
 				agk::PlaySprite(spriteID, animations[i].getFPS(), animations[i].getLoop());
 				break;
 			}
@@ -155,6 +165,12 @@ public:
 	}
 	void resumeAnimation() {
 		agk::ResumeSprite(spriteID);
+	}
+	bool getAnimationLooping() {
+		return loopingAnimation;
+	}
+	string getAnimationPlaying() {
+		return currentAnimation;
 	}
 	bool isAnimationPlaying() {
 		return (bool)agk::GetSpritePlaying(spriteID);
@@ -1542,6 +1558,9 @@ public:
 	void setX(float x) {
 		agk::SetTextX(textID, x);
 	}
+	void setVisible(bool value) {
+		agk::SetTextVisible(textID, (int)value);
+	}
 	void setY(float y) {
 		agk::SetTextY(textID, y);
 	}
@@ -1709,16 +1728,26 @@ class GuiButton {
 private:
 	Entity object;
 	Text text;
+	Sound hoverSound;
+	bool hasHoverSound;
+	Sound clickSound;
+	bool hasClickSound;
 	string idleAni;
 	string hoverAni;
 	string clickAni;
+	bool isClicked;
 	bool hasText;
+	bool active;
 public:
 	GuiButton() {
 		idleAni = "";
 		hoverAni = "";
 		clickAni = "";
 		hasText = false;
+		hasHoverSound = false;
+		hasClickSound = false;
+		isClicked = false;
+		active = false;
 	}
 	GuiButton(string filename, float x, float y, float w, float h) {
 		object = Entity(filename, x, y);
@@ -1727,10 +1756,14 @@ public:
 		hoverAni = "";
 		clickAni = "";
 		hasText = false;
+		hasHoverSound = false;
+		hasClickSound = false;
+		isClicked = false;
+		active = true;
 	}
 	void setupText(string ttfFilename, string textValue, float size, int r = 255, int g = 255, int b = 255) {
 		hasText = true;
-		text = Text(ttfFilename, textValue, size, object.getX() + (object.getW() / 2.0), object.getY() + (object.getH() / 2.0), 1);
+		text = Text(ttfFilename, textValue, size, object.getX() + (object.getW() / 2.0), object.getY() + (object.getH() / 3.0), 1);
 		text.setColor(r, g, b);
 	}
 	void setIdleAnimation(Animation idle) {
@@ -1745,11 +1778,139 @@ public:
 		object.addAnimation(click);
 		clickAni = click.getName();
 	}
+	void addHoverSound(string filename) {
+		hasHoverSound = true;
+		hoverSound = Sound(filename);
+	}
+	void addClickSound(string filename) {
+		hasClickSound = true;
+		clickSound = Sound(filename);
+	}
 	void setFixed(bool value) {
 		object.setFixed(value);
 		if (hasText) {
-			text.fixTextToScreen();
+			text.fixTextToScreen(value);
 		}
 	}
+	bool clicked() {
+		return isClicked;
+	}
+	void update(Engine &e) {
+		if (active) {
+			if (isClicked) isClicked = false;
+			if ((e.mouseX()>object.getX()&&e.mouseX()<object.getX()+object.getW())&&(e.mouseY()>object.getY()&&e.mouseY()<object.getY()+object.getH())) {
+				if (e.click()) {
+					if (clickAni != "") {
+						if (object.getAnimationPlaying() != clickAni) {
+							object.setAnimation(clickAni);
+							if (hasClickSound) {
+								clickSound.play();
+							}
+						}
+					}
+					else {
+						if (hasClickSound) {
+							clickSound.play();
+						}
+						isClicked = true;
+					}
+				}
+				else {
+					if (hoverAni != "" && object.getAnimationPlaying() != hoverAni) {
+						object.setAnimation(hoverAni);
+						if (hasHoverSound) {
+							hoverSound.play();
+						}
+					}
+				}
+			}
+			else {
+				if (clickAni != "" && object.getAnimationPlaying() == clickAni) {
+					if (!object.getAnimationLooping()) {
+						isClicked = true;
+						if (idleAni != "") {
+							object.setAnimation(idleAni);
+						}
+					}
+					else if (!object.isAnimationPlaying()) {
+						isClicked = true;
+						if (idleAni != "") {
+							object.setAnimation(idleAni);
+						}
+					}
+				}
+				else {
+					if (idleAni != "") {
+						object.setAnimation(idleAni);
+					}
+				}
+			}
+		}
+	}
+	void setVisible(bool value) {
+		object.setVisible(value);
+		if (hasText) {
+			text.setVisible(value);
+		}
+	}
+	void setActive(bool value) {
+		object.setActive(value);
+		if (hasText) {
+			text.setVisible(value);
+		}
+		active = value;
+	}
+};
 
+struct NamedButton {
+	GuiButton button;
+	string name;
+	NamedButton(GuiButton newButton, string newName) {
+		button = newButton;
+		name = newName;
+	}
+};
+
+class ButtonGroup {
+private:
+	vector<NamedButton> buttons;
+public:
+	void addButton(GuiButton button, string name) {
+		buttons.emplace_back(button, name);
+	}
+	void update(Engine &e) {
+		for (int i = 0; i < buttons.size(); i++) {
+			buttons[i].button.update(e);
+		}
+	}
+	GuiButton getButton(string name) {
+		GuiButton result = GuiButton();
+		for (int i = 0; i < buttons.size(); i++) {
+			if (buttons[i].name == name) {
+				result = buttons[i].button;
+				break;
+			}
+		}
+		return result;
+	}
+	bool isClicked(string name) {
+		bool result = false;
+		for (int i = 0; i < buttons.size(); i++) {
+			if (buttons[i].name == name) {
+				result = buttons[i].button.clicked();
+				break;
+			}
+		}
+		return result;
+	}
+	void setVisible(bool value) {
+		for (int i = 0; i < buttons.size(); i++) {
+			buttons[i].button.setVisible(value);
+		}
+	}
+	void setActive(bool value) {
+		for (int i = 0; i < buttons.size(); i++) {
+			buttons[i].button.setActive(value);
+		}
+	}
 };

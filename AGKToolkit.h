@@ -129,6 +129,9 @@ public:
 	void addAnimation(Animation anim) {
 		animations.push_back(anim);
 	}
+	void setFixed(bool value) {
+		agk::FixSpriteToScreen(spriteID, (int)value);
+	}
 	void setAnimation(string name) {
 		for (int i = 0; i < animations.size(); i++) {
 			if (name == animations[i].getName()) {
@@ -1554,8 +1557,8 @@ public:
 	int getID() {
 		return textID;
 	}
-	void fixTextToScreen() {
-		agk::FixTextToScreen(textID, 1);
+	void fixTextToScreen(bool value) {
+		agk::FixTextToScreen(textID, (int)value);
 	}
 	void setAlignment(int align) {
 		agk::SetTextAlignment(textID, align);
@@ -1700,4 +1703,53 @@ public:
 	void reset() {
 		for_each(events.begin(), events.end(), [&](Moment i) { i.setActive(true); })
 	}
+};
+
+class GuiButton {
+private:
+	Entity object;
+	Text text;
+	string idleAni;
+	string hoverAni;
+	string clickAni;
+	bool hasText;
+public:
+	GuiButton() {
+		idleAni = "";
+		hoverAni = "";
+		clickAni = "";
+		hasText = false;
+	}
+	GuiButton(string filename, float x, float y, float w, float h) {
+		object = Entity(filename, x, y);
+		object.setSize(w, h);
+		idleAni = "";
+		hoverAni = "";
+		clickAni = "";
+		hasText = false;
+	}
+	void setupText(string ttfFilename, string textValue, float size, int r = 255, int g = 255, int b = 255) {
+		hasText = true;
+		text = Text(ttfFilename, textValue, size, object.getX() + (object.getW() / 2.0), object.getY() + (object.getH() / 2.0), 1);
+		text.setColor(r, g, b);
+	}
+	void setIdleAnimation(Animation idle) {
+		object.addAnimation(idle);
+		idleAni = idle.getName();
+	}
+	void setHoverAnimation(Animation hover) {
+		object.addAnimation(hover);
+		hoverAni = hover.getName();
+	}
+	void setClickAnimation(Animation click) {
+		object.addAnimation(click);
+		clickAni = click.getName();
+	}
+	void setFixed(bool value) {
+		object.setFixed(value);
+		if (hasText) {
+			text.fixTextToScreen();
+		}
+	}
+
 };

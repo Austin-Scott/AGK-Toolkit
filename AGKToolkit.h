@@ -1921,12 +1921,16 @@ private:
 	int spriteID;
 	float speed;
 	string current;
+	float offsetX;
+	float offsetY;
 public:
 	Skeleton() {
 		skeletonID = -1;
 		spriteID = -1;
 		speed = 1.0;
 		current = "";
+		offsetX = 0;
+		offsetY = 0;
 	}
 	Skeleton(string filename, float scale, float x = 0, float y = 0) {
 		skeletonID = agk::LoadSkeleton2DFromSpriterFile(filename.c_str(), scale, 0);
@@ -1934,12 +1938,16 @@ public:
 		setPos(x, y);
 		speed = 1.0;
 		current = "";
+		offsetX = 0;
+		offsetY = 0;
 	}
 	void setPos(float x, float y) {
 		agk::SetSkeleton2DPosition(skeletonID, x, y);
 	}
-	void lockToSprite(int id) {
+	void lockToSprite(int id, float relX, float relY) {
 		spriteID = id;
+		offsetX = relX;
+		offsetY = relY;
 	}
 	float getSpeed() {
 		return speed;
@@ -1964,10 +1972,92 @@ public:
 	void setFlip(bool value) {
 		agk::SetSkeleton2DFlip(skeletonID, (int)value, 0);
 	}
-	void update() {
+	void update(bool fixed=false) {
 		if (spriteID != -1) {
-			agk::SetSkeleton2DPosition(skeletonID, agk::GetSpriteX(spriteID)+(agk::GetSpriteWidth(spriteID)/2.0), agk::GetSpriteY(spriteID)+(agk::GetSpriteHeight(spriteID)/2.0));
+			if (fixed) {
+				agk::SetSkeleton2DPosition(skeletonID, (agk::ScreenToWorldX(agk::GetSpriteX(spriteID) + (agk::GetSpriteWidth(spriteID) / 2.0)))+offsetX, (agk::ScreenToWorldY(agk::GetSpriteY(spriteID) + (agk::GetSpriteHeight(spriteID) / 2.0)))+offsetY);
+			}
+			else {
+				agk::SetSkeleton2DPosition(skeletonID, (agk::GetSpriteX(spriteID) + (agk::GetSpriteWidth(spriteID) / 2.0))+offsetX, (agk::GetSpriteY(spriteID) + (agk::GetSpriteHeight(spriteID) / 2.0))+offsetY);
+			}
 			agk::SetSkeleton2DRotation(skeletonID, agk::GetSpriteAngle(spriteID));
 		}
 	}
+};
+
+struct ParticleColorKeyFrame {
+	float time;
+	int r;
+	int g;
+	int b;
+	int a;
+	ParticleColorKeyFrame(float nTime, int nr, int ng, int nb, int na) {
+		time = nTime;
+		r = nr;
+		g = ng;
+		b = nb;
+		a = na;
+	}
+};
+
+struct ParticleForceKeyFrame {
+	float startTime;
+	float endTime;
+	float x;
+	float y;
+	ParticleForceKeyFrame(float start, float end, float nx, float ny) {
+		startTime = start;
+		endTime = end;
+		x = nx;
+		y = ny;
+	}
+};
+
+struct ParticleScaleKeyFrame {
+	float time;
+	float scale;
+	ParticleScaleKeyFrame(float atTime, float nScale) {
+		time = atTime;
+		scale = nScale;
+	}
+};
+
+struct Emitter {
+	int ID=-1;
+	int offsetX=0;
+	int offsetY=0;
+	int spriteToFollow = -1;
+};
+
+class ParticleEmitter {
+private:
+	vector<ParticleColorKeyFrame> colorFrames;
+	vector<ParticleForceKeyFrame> forceFrames;
+	vector<ParticleScaleKeyFrame> scaleFrames;
+	vector<Emitter> particles;
+	bool fixToScreen = false;
+	bool colorInterpolation = true;
+	int depth = 0;
+	int imageID = -1;
+	float vx = 0;
+	float vy = 0;
+	bool faceDirection = false;
+	float freq = 1;
+	float life = 5;
+	int max = 50;
+	float rotationmin = 0;
+	float rotationmax = 0;
+	float size = 1;
+	float x1 = 0;
+	float x2 = 0;
+	float y1 = 0;
+	float y2 = 0;
+	int blendMode = 1;
+	float minVel = 1;
+	float maxVel = 1;
+public:
+	ParticleEmitter() {
+
+	}
+	//TODO finish here
 };

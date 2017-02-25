@@ -1914,3 +1914,60 @@ public:
 		}
 	}
 };
+
+class Skeleton {
+private:
+	int skeletonID;
+	int spriteID;
+	float speed;
+	string current;
+public:
+	Skeleton() {
+		skeletonID = -1;
+		spriteID = -1;
+		speed = 1.0;
+		current = "";
+	}
+	Skeleton(string filename, float scale, float x = 0, float y = 0) {
+		skeletonID = agk::LoadSkeleton2DFromSpriterFile(filename.c_str(), scale, 0);
+		spriteID = -1;
+		setPos(x, y);
+		speed = 1.0;
+		current = "";
+	}
+	void setPos(float x, float y) {
+		agk::SetSkeleton2DPosition(skeletonID, x, y);
+	}
+	void lockToSprite(int id) {
+		spriteID = id;
+	}
+	float getSpeed() {
+		return speed;
+	}
+	void setSpeed(float value) {
+		speed = value;
+		agk::SetSkeleton2DAnimationSpeed(skeletonID, speed);
+	}
+	string getAnimationName() {
+		return current;
+	}
+	bool isAnimating() {
+		return (bool)agk::GetSkeleton2DIsAnimating(skeletonID);
+	}
+	void playAnimation(string animationName, float tweenTime, int loop=1) {
+		agk::PlaySkeleton2DAnimation(skeletonID, animationName.c_str(), 0, loop, tweenTime);
+		current = animationName;
+	}
+	void setVisible(bool value) {
+		agk::SetSkeleton2DVisible(skeletonID, (int)value);
+	}
+	void setFlip(bool value) {
+		agk::SetSkeleton2DFlip(skeletonID, (int)value, 0);
+	}
+	void update() {
+		if (spriteID != -1) {
+			agk::SetSkeleton2DPosition(skeletonID, agk::GetSpriteX(spriteID)+(agk::GetSpriteWidth(spriteID)/2.0), agk::GetSpriteY(spriteID)+(agk::GetSpriteHeight(spriteID)/2.0));
+			agk::SetSkeleton2DRotation(skeletonID, agk::GetSpriteAngle(spriteID));
+		}
+	}
+};

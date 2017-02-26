@@ -2027,6 +2027,12 @@ struct Emitter {
 	int offsetX=0;
 	int offsetY=0;
 	int spriteToFollow = -1;
+	Emitter(int nID, int nOffX, int nOffY, int nSprite) {
+		ID = nID;
+		offsetX = nOffX;
+		offsetY = nOffY;
+		spriteToFollow = nSprite;
+	}
 };
 
 class ParticleEmitter {
@@ -2059,5 +2065,115 @@ public:
 	ParticleEmitter() {
 
 	}
-	//TODO finish here
+	ParticleEmitter(string filename, float nLife, int nMax=-1) {
+		imageID = agk::LoadImage(filename.c_str());
+		life = nLife;
+		max = nMax;
+	}
+	void addColorKeyFrame(float time, int r, int g, int b, int a) {
+		colorFrames.emplace_back(time, r, g, b, a);
+	}
+	void addForceKeyFrame(float start, float end, float x, float y) {
+		forceFrames.emplace_back(start, end, x, y);
+	}
+	void addScaleKeyFrame(float time, float scale) {
+		scaleFrames.emplace_back(time, scale);
+	}
+	void setFixed(bool value) {
+		fixToScreen = value;
+	}
+	void setColorInterpolation(bool value) {
+		colorInterpolation = value;
+	}
+	void setDepth(int value) {
+		depth = value;
+	}
+	void setDirection(float nvx, float nvy) {
+		vx = nvx;
+		vy = nvy;
+	}
+	void setFaceDirection(bool value) {
+		faceDirection = value;
+	}
+	void setFrequency(float value) {
+		freq = value;
+	}
+	void setLife(float value) {
+		life = value;
+	}
+	void setMax(int value) {
+		max = value;
+	}
+	void setRotationRange(float min, float max) {
+		rotationmin = min;
+		rotationmax = max;
+	}
+	void setSize(float value) {
+		size = value;
+	}
+	void setStartZone(float nx1, float ny1, float nx2, float ny2) {
+		x1 = nx1;
+		y1 = ny1;
+		x2 = nx2;
+		y2 = ny2;
+	}
+	void setBlendMode(int value = 1) {
+		blendMode = value;
+	}
+	void setVelRange(float min, float max) {
+		minVel = min;
+		maxVel = max;
+	}
+	void create(float x, float y, int sprite = -1, int offx = 0, int offY = 0) {
+		int id = agk::CreateParticles(x, y);
+		for (int i = 0; i < colorFrames.size(); i++) {
+			agk::AddParticlesColorKeyFrame(id, colorFrames[i].time, colorFrames[i].r, colorFrames[i].g, colorFrames[i].b, colorFrames[i].a);
+		}
+		for (int i = 0; i < forceFrames.size(); i++) {
+			agk::AddParticlesForce(id, forceFrames[i].startTime, forceFrames[i].endTime, forceFrames[i].x, forceFrames[i].y);
+		}
+		for (int i = 0; i < scaleFrames.size(); i++) {
+			agk::AddParticlesScaleKeyFrame(id, scaleFrames[i].time, scaleFrames[i].scale);
+		}
+		agk::FixParticlesToScreen(id, (int)fixToScreen);
+		agk::SetParticlesColorInterpolation(id, (int)colorInterpolation);
+		agk::SetParticlesDepth(id, depth);
+		agk::SetParticlesDirection(id, vx, vy);
+		agk::SetParticlesFaceDirection(id, (int)faceDirection);
+		agk::SetParticlesFrequency(id, freq);
+		agk::SetParticlesImage(id, imageID);
+		agk::SetParticlesLife(id, life);
+		agk::SetParticlesMax(id, max);
+		agk::SetParticlesRotationRange(id, rotationmin, rotationmax);
+		agk::SetParticlesSize(id, size);
+		agk::SetParticlesStartZone(id, x1, y1, x2, y2);
+		agk::SetParticlesTransparency(id, blendMode);
+		agk::SetParticlesVelocityRange(id, minVel, maxVel);
+
+		particles.emplace_back(id, offx, offY, sprite);
+	}
+	void update() {
+		for (int i = 0; i < particles.size(); i++) {
+			if (agk::GetParticlesMaxReached(particles[i].ID) == 1) {
+				agk::DeleteParticles(particles[i].ID);
+				particles.erase(particles.begin() + i);
+				i--;
+			}
+			else if(particles[i].spriteToFollow!=-1) {
+				agk::SetParticlesPosition(particles[i].ID, agk::GetSpriteX(particles[i].spriteToFollow) + particles[i].offsetX, agk::GetSpriteY(particles[i].spriteToFollow) + particles[i].offsetY);
+			}
+		}
+	}
+	void setActive(bool value) {
+		for (int i = 0; i < particles.size(); i++) {
+			agk::SetParticlesActive(particles[i].ID, (int)value);
+		}
+	}
+	void destroyAll() {
+		for (int i = 0; i < particles.size(); i++) {
+			agk::DeleteParticles(particles[i].ID);
+			particles.erase(particles.begin() + i);
+			i--;
+		}
+	}
 };

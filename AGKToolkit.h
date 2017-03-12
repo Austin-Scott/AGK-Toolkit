@@ -501,21 +501,31 @@ public:
 	}
 };
 
-class timer {
+class Timer {
 private:
 	float seconds;
 	bool running;
+	bool countDown;
 	float startTime;
+	string intToString(int value) {
+		stringstream buffer;
+		buffer << value;
+		string result = "";
+		buffer >> result;
+		return result;
+	}
 public:
-	timer() {
+	Timer() {
 		seconds = 0;
 		startTime = 0;
 		running = false;
+		countDown = true;
 	}
-	timer(float time) {
+	Timer(float time, bool shouldCountDown=true) {
 		seconds = time;
 		startTime = time;
 		running = false;
+		countDown = shouldCountDown;
 	}
 	void set(float time) {
 		seconds = time;
@@ -532,11 +542,59 @@ public:
 	}
 	void update(float delta) {
 		if (running) {
-			seconds -= delta;
+			if (countDown) {
+				seconds -= delta;
+			}
+			else {
+				seconds += delta;
+			}
 		}
 	}
 	float getTime() {
 		return seconds;
+	}
+	string getFormatedTime() {
+		string result = "";
+		float remainingTime = seconds;
+		int hours = remainingTime / 3600;
+		remainingTime -= hours * 3600;
+		int minutes = remainingTime / 60;
+		remainingTime -= minutes * 60;
+		int seconds = remainingTime;
+		remainingTime -= seconds;
+		int decimal = remainingTime * 10;
+
+		if (hours > 0) {
+			if (hours < 10) {
+				result += "0" + intToString(hours) + ":";
+			}
+			else {
+				result += intToString(hours) + ":";
+			}
+		}
+		if (minutes > 0 || hours > 0) {
+			if (minutes == 0) {
+				result += "00:";
+			}
+			else if (minutes < 10) {
+				result += "0" + intToString(minutes) + ":";
+			}
+			else {
+				result += intToString(minutes) + ":";
+			}
+		}
+		if (seconds == 0) {
+			result += "00.";
+		}
+		else if (seconds < 10) {
+			result += "0" + intToString(seconds) + ".";
+		}
+		else {
+			result += intToString(seconds) + ".";
+		}
+		result += decimal;
+
+		return result;
 	}
 	bool check() {
 		return !(seconds > 0);
@@ -1641,7 +1699,7 @@ public:
 template<class T> class Timeline {
 private:
 	vector<Moment<T>> events;
-	timer clock;
+	Timer clock;
 	int index;
 	bool running;
 public:

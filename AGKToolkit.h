@@ -1622,6 +1622,12 @@ public:
 	void setY(float y) {
 		agk::SetTextY(textID, y);
 	}
+	float getX() {
+		return agk::GetTextX(textID);
+	}
+	float getY() {
+		return agk::GetTextY(textID);
+	}
 	string getString() {
 		return agk::GetTextString(textID);
 	}

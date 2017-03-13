@@ -194,6 +194,21 @@ public:
 			spriteID = agk::CreateSprite(imageID);
 		}
 	}
+	void setColor(int r, int g, int b, int a) {
+		agk::SetSpriteColor(spriteID, r, g, b, a);
+	}
+	int getColorRed() {
+		return agk::GetSpriteColorRed(spriteID);
+	}
+	int getColorGreen() {
+		return agk::GetSpriteColorGreen(spriteID);
+	}
+	int getColorBlue() {
+		return agk::GetSpriteColorBlue(spriteID);
+	}
+	int getColorAlpha() {
+		return agk::GetSpriteColorAlpha(spriteID);
+	}
 	bool compare(Entity other) {
 		if (spriteID == other.getID()) {
 			return true;
@@ -592,7 +607,7 @@ public:
 		else {
 			result += intToString(seconds) + ".";
 		}
-		result += decimal;
+		result += intToString(decimal);
 
 		return result;
 	}
@@ -1634,8 +1649,20 @@ public:
 	void setString(string content) {
 		agk::SetTextString(textID, content.c_str());
 	}
-	void setColor(int r, int g, int b) {
-		agk::SetTextColor(textID, r, g, b);
+	void setColor(int r, int g, int b, int a=255) {
+		agk::SetTextColor(textID, r, g, b, a);
+	}
+	int getColorRed() {
+		return agk::GetTextColorRed(textID);
+	}
+	int getColorGreen() {
+		return agk::GetTextColorGreen(textID);
+	}
+	int getColorBlue() {
+		return agk::GetTextColorBlue(textID);
+	}
+	int getColorAlpha() {
+		return agk::GetTextColorAlpha(textID);
 	}
 	int getID() {
 		return textID;

@@ -1534,6 +1534,60 @@ public:
 	}
 };
 
+class MusicOGG {
+private:
+	int musicID;
+	int volume = 100;
+public:
+	MusicOGG() {
+		musicID = -1;
+		volume = 100;
+	}
+	MusicOGG(string filename) {
+		musicID = -1;
+		volume = 100;
+		loadMusic(filename);
+	}
+	void loadMusic(string filename) {
+		if (musicID == -1) {
+			musicID = agk::LoadMusicOGG(filename.c_str());
+		}
+		else {
+			agk::DeleteMusic(musicID);
+			musicID = agk::LoadMusicOGG(filename.c_str());
+		}
+	}
+	int getID() {
+		return musicID;
+	}
+	void play(int loop = 0) {
+		agk::PlayMusicOGG(musicID, loop);
+	}
+	bool isPlaying() {
+		return (bool)agk::GetMusicPlayingOGG(musicID);
+	}
+	void stop() {
+		agk::StopMusicOGG(musicID);
+	}
+	void pause() {
+		agk::PauseMusicOGG(musicID);
+	}
+	void resume() {
+		agk::ResumeMusicOGG(musicID);
+	}
+	void destroy() {
+		agk::DeleteMusicOGG(musicID);
+		musicID = -1;
+	}
+	void setVolume(int value) {
+		volume = value;
+		agk::SetMusicVolumeOGG(musicID, value);
+	}
+	int getVolume() {
+		return volume;
+	}
+};
+
 class Music {
 private:
 	int musicID;

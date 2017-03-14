@@ -140,6 +140,9 @@ public:
 	void setFixed(bool value) {
 		agk::FixSpriteToScreen(spriteID, (int)value);
 	}
+	void setDepth(int value) {
+		agk::SetSpriteDepth(spriteID, value);
+	}
 	void setAnimation(string name) {
 		for (int i = 0; i < animations.size(); i++) {
 			if (name == animations[i].getName()) {
@@ -1911,6 +1914,9 @@ public:
 		isClicked = false;
 		active = true;
 	}
+	Entity getEntity() {
+		return object;
+	}
 	void setupText(string ttfFilename, string textValue, float size, int r = 255, int g = 255, int b = 255) {
 		hasText = true;
 		text = Text(ttfFilename, textValue, size, object.getX() + (object.getW() / 2.0), object.getY() + (object.getH() / 3.0), 1);
@@ -1943,7 +1949,11 @@ public:
 		}
 	}
 	bool clicked() {
-		return isClicked;
+		if (isClicked) {
+			isClicked = false;
+			return true;
+		}
+		else return false;
 	}
 	void update(Engine &e) {
 		if (active) {

@@ -423,7 +423,12 @@ public:
 								Movement current = movementList[0];
 								movementList.push_back(current);
 							}
-							movementList.erase(movementList.begin());
+							
+							for (int i = 0; i < movementList.size() - 1; i++) {
+								movementList[i] = movementList[i + 1];
+							}
+							movementList.pop_back();
+
 						}
 					}
 				}

@@ -1914,12 +1914,31 @@ public:
 		isClicked = false;
 		active = true;
 	}
+	GuiButton(int imageID, float x, float y, float w, float h) {
+		object = Entity();
+		object.setImage(imageID);
+		object.setPos(x, y);
+		object.setSize(w, h);
+		idleAni = "";
+		hoverAni = "";
+		clickAni = "";
+		hasText = false;
+		hasHoverSound = false;
+		hasClickSound = false;
+		isClicked = false;
+		active = true;
+	}
 	Entity getEntity() {
 		return object;
 	}
 	void setupText(string ttfFilename, string textValue, float size, int r = 255, int g = 255, int b = 255) {
 		hasText = true;
-		text = Text(ttfFilename, textValue, size, object.getX() + (object.getW() / 2.0), object.getY() + (object.getH() / 3.0), 1);
+		text = Text(Font(ttfFilename), textValue, size, object.getX() + (object.getW() / 2.0), object.getY() + (object.getH() / 3.0), 1);
+		text.setColor(r, g, b);
+	}
+	void setupText(Font ttf, string textValue, float size, int r = 255, int g = 255, int b = 255) {
+		hasText = true;
+		text = Text(ttf, textValue, size, object.getX() + (object.getW() / 2.0), object.getY() + (object.getH() / 3.0), 1);
 		text.setColor(r, g, b);
 	}
 	void setIdleAnimation(Animation idle) {

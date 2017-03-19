@@ -11,12 +11,6 @@
 using namespace std;
 using namespace rapidxml;
 
-string ss(static char* value) {
-	string result = "";
-	result = value;
-	delete value;
-	return result;
-}
 
 class Animation {
 private:
@@ -1284,6 +1278,12 @@ public:
 
 class Entry {
 private:
+	string ss(static char* value) {
+		string result = "";
+		result = value;
+		delete value;
+		return result;
+	}
 	string name;
 	int intValue;
 	float floatValue;
@@ -1668,6 +1668,12 @@ class Text {
 private:
 	Font ttFont;
 	int textID;
+	string ss(static char* value) {
+		string result = "";
+		result = value;
+		delete value;
+		return result;
+	}
 public:
 	Text() {
 		ttFont = Font();

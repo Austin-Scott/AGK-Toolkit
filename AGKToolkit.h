@@ -11,6 +11,12 @@
 using namespace std;
 using namespace rapidxml;
 
+string ss(static char* value) {
+	string result = "";
+	result = value;
+	delete value;
+	return result;
+}
 
 class Animation {
 private:
@@ -1311,7 +1317,7 @@ public:
 		name = agk::ReadString(file);
 		intValue = agk::ReadInteger(file);
 		floatValue = agk::ReadFloat(file);
-		stringValue = agk::ReadString(file);
+		stringValue = ss(agk::ReadString(file));
 	}
 	void write(int file) {
 		agk::WriteString(file, name.c_str());
@@ -1706,7 +1712,7 @@ public:
 		return agk::GetTextY(textID);
 	}
 	string getString() {
-		return agk::GetTextString(textID);
+		return ss(agk::GetTextString(textID));
 	}
 	void setString(string content) {
 		agk::SetTextString(textID, content.c_str());

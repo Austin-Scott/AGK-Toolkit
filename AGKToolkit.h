@@ -1451,6 +1451,7 @@ public:
 		agk::SetClearColor(0, 0, 0);
 		agk::SetWindowTitle(windowTitle.c_str());
 		agk::SetSyncRate(fps, 0);
+		agk::SetScissor(0, 0, width, height);
 		offsetX = 0;
 		offsetY = 0;
 	}

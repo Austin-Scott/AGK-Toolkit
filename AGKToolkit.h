@@ -1879,7 +1879,7 @@ public:
 
 class GuiButton {
 private:
-	Entity object;
+	DynamicEntity object;
 	Text text;
 	Sound hoverSound;
 	bool hasHoverSound;
@@ -1891,8 +1891,16 @@ private:
 	bool isClicked;
 	bool hasText;
 	bool active;
+	float startX;
+	float startY;
+	float preX;
+	float preY;
 public:
 	GuiButton() {
+		startX = 0;
+		startY = 0;
+		preX = 0;
+		preY = 0;
 		idleAni = "";
 		hoverAni = "";
 		clickAni = "";
@@ -1903,7 +1911,11 @@ public:
 		active = false;
 	}
 	GuiButton(string filename, float x, float y, float w, float h) {
-		object = Entity(filename, x, y);
+		object = DynamicEntity(filename, x, y);
+		startX = x;
+		startY = y;
+		preX = x;
+		preY = y;
 		object.setSize(w, h);
 		idleAni = "";
 		hoverAni = "";
@@ -1915,9 +1927,13 @@ public:
 		active = true;
 	}
 	GuiButton(int imageID, float x, float y, float w, float h) {
-		object = Entity();
+		object = DynamicEntity();
 		object.setImage(imageID);
 		object.setPos(x, y);
+		startX = x;
+		startY = y;
+		preX = x;
+		preY = y;
 		object.setSize(w, h);
 		idleAni = "";
 		hoverAni = "";
@@ -1928,18 +1944,28 @@ public:
 		isClicked = false;
 		active = true;
 	}
-	Entity getEntity() {
+	DynamicEntity getEntity() {
 		return object;
+	}
+	void returnToStartPos(float duration, int tween) {
+		if (startX != object.getX() || startY != object.getY()) {
+			float distance = sqrt(pow(startX - object.getX(), 2) + pow(startY - object.getY(), 2));
+			object.moveToPoint(startX, startY, distance / duration, true, tween);
+		}
 	}
 	void setupText(string ttfFilename, string textValue, float size, int r = 255, int g = 255, int b = 255) {
 		hasText = true;
 		text = Text(Font(ttfFilename), textValue, size, object.getX() + (object.getW() / 2.0), object.getY() + (object.getH() / 3.0), 1);
 		text.setColor(r, g, b);
+		preX = text.getX();
+		preY = text.getY();
 	}
 	void setupText(Font ttf, string textValue, float size, int r = 255, int g = 255, int b = 255) {
 		hasText = true;
 		text = Text(ttf, textValue, size, object.getX() + (object.getW() / 2.0), object.getY() + (object.getH() / 3.0), 1);
 		text.setColor(r, g, b);
+		preX = text.getX();
+		preY = text.getY();
 	}
 	void setIdleAnimation(Animation idle) {
 		object.addAnimation(idle);
@@ -1976,6 +2002,13 @@ public:
 	}
 	void update(Engine &e) {
 		if (active) {
+
+			object.update(e.delta());
+			if (hasText) {
+				text.setX(object.getX() + (object.getW() / 2.0));
+				text.setY(object.getY() + (object.getH() / 3.0));
+			}
+
 			if (isClicked) isClicked = false;
 			if ((e.mouseX()>object.getX()&&e.mouseX()<object.getX()+object.getW())&&(e.mouseY()>object.getY()&&e.mouseY()<object.getY()+object.getH())) {
 				if (e.click()) {
